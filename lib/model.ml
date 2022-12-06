@@ -17,7 +17,6 @@ module Make (Context : S.CONTEXT) = struct
     | Real of real_role               (* A role is usually an opam package name *)
     | Virtual of int * impl list      (* (int just for sorting) *)
   and real_impl = {
-    context : Context.t;
     pkg : OpamPackage.t;
     opam : OpamFile.OPAM.t;
     requires : dependency list;
@@ -192,7 +191,7 @@ module Make (Context : S.CONTEXT) = struct
                 make_deps `Essential ensure OpamFile.OPAM.depends @
                 make_deps `Restricts prevent OpamFile.OPAM.conflicts
               in
-              Some (RealImpl { context; pkg; opam; requires })
+              Some (RealImpl { pkg; opam; requires })
           )
       in
       { impls; replacement = None }
@@ -216,9 +215,8 @@ module Make (Context : S.CONTEXT) = struct
     match role with
     | Virtual _ -> [], []
     | Real role ->
-      let context = role.context in
       let rejects =
-        Context.candidates context role.name
+        Context.candidates role.context role.name
         |> List.filter_map (function
             | _, Ok _ -> None
             | version, Error reason ->
